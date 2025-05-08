@@ -1,139 +1,125 @@
 from fastapi import FastAPI, HTTPException
 from mangum import Mangum
 
-from .environments import Environments
+from src.app.repo.transaction_repository_mock import TransactionRepositoryMock
+from src.app.repo.account_repository_mock import AccountRepositoryMock
+from src.app.errors.entity_errors import ParamNotValidated
+from src.app.enums.transactions_type_enum import TransactionsType
+from src.app.entities.account import Account
+from src.app.entities.transaction import Transaction
 
-from .repo.item_repository_mock import ItemRepositoryMock
-
-from .errors.entity_errors import ParamNotValidated
-
-from .enums.item_type_enum import ItemTypeEnum
-
-from .entities.item import Item
-
+import time
 
 app = FastAPI()
 
-repo = Environments.get_item_repo()()
+account_repo = AccountRepositoryMock()
+transaction_repo = TransactionRepositoryMock()
 
-@app.get("/items/get_all_items")
-def get_all_items():
-    items = repo.get_all_items()
-    return {
-        "items": [item.to_dict() for item in items]
-    }
-
-@app.get("/items/{item_id}")
-def get_item(item_id: int):
-    validation_item_id = Item.validate_item_id(item_id=item_id)
-    if not validation_item_id[0]:
-        raise HTTPException(status_code=400, detail=validation_item_id[1])
+@app.get("/accounts/{account_id}")
+def get_account(account_id: int):
+    account = account_repo.get_account(account_id)
     
-    item = repo.get_item(item_id)
-    
-    if item is None:
-        raise HTTPException(status_code=404, detail="Item Not found")
+    if account is None:
+        raise HTTPException(status_code=404, detail="Account not found")
     
     return {
-        "item_id": item_id,
-        "item": item.to_dict()    
+        "account_id": account_id,
+        "account": account.to_dict()    
     }
 
-@app.post("/items/create_item", status_code=201)
-def create_item(request: dict):
-    item_id = request.get("item_id")
+@app.post("/accounts/{account_id}/deposit", status_code=201)
+def make_deposit(account_id: int, request: dict):
+    value = request.get("value")
     
-    validation_item_id = Item.validate_item_id(item_id=item_id)
-    if not validation_item_id[0]:
-        raise HTTPException(status_code=400, detail=validation_item_id[1])
+    if value is None:
+        raise HTTPException(status_code=400, detail="Value is required")
+    if type(value) != float:
+        raise HTTPException(status_code=400, detail="Value must be a float")
+    if value <= 0:
+        raise HTTPException(status_code=400, detail="Value must be positive")
+
+    account = account_repo.get_account(account_id)
+    if account is None:
+        raise HTTPException(status_code=404, detail="Account not found")
+
+    updated_account = account_repo.make_deposit(account, value)
+
+    transaction = transaction_repo.create_transaction(
+        transaction_type=TransactionsType.DEPOSIT,
+        transaction_value=value,
+        transaction_time=time.time(),
+        curr_balance=updated_account.current_balance
+    )
     
-    item = repo.get_item(item_id)
-    if item is not None:
-        raise HTTPException(status_code=409, detail="Item already exists")
+    return {
+        "account_id": account_id,
+        "account": updated_account.to_dict(),
+        "transaction": transaction.to_dict()
+    }
+
+@app.post("/accounts/{account_id}/withdraw", status_code=201)
+def make_withdraw(account_id: int, request: dict):
+    value = request.get("value")
     
-    name = request.get("name")
-    price = request.get("price")
-    item_type = request.get("item_type")
-    if item_type is None:
-        raise HTTPException(status_code=400, detail="Item type is required")
-    if type(item_type) != str:
-        raise HTTPException(status_code=400, detail="Item type must be a string")
-    if item_type not in [possible_type.value for possible_type in ItemTypeEnum]:
-        raise HTTPException(status_code=400, detail="Item type is not a valid one")
+    if value is None:
+        raise HTTPException(status_code=400, detail="Value is required")
+    if type(value) != float:
+        raise HTTPException(status_code=400, detail="Value must be a float")
+    if value <= 0:
+        raise HTTPException(status_code=400, detail="Value must be positive")
+
+    account = account_repo.get_account(account_id)
+    if account is None:
+        raise HTTPException(status_code=404, detail="Account not found")
+    if account.current_balance < value:
+        raise HTTPException(status_code=400, detail="Insufficient funds")
+
+    updated_account = account_repo.make_withdraw(account, value)
     
-    admin_permission = request.get("admin_permission")
+    transaction = transaction_repo.create_transaction(
+        transaction_type=TransactionsType.WITHDRAW,
+        transaction_value=value,
+        transaction_time=time.time(),
+        curr_balance=updated_account.current_balance
+    )
     
+    return {
+        "account_id": account_id,
+        "account": updated_account.to_dict(),
+        "transaction": transaction.to_dict()
+    }
+
+@app.get("/accounts/{account_id}/transactions")
+def get_transactions(account_id: int):
+    account = account_repo.get_account(account_id)
+    if account is None:
+        raise HTTPException(status_code=404, detail="Account not found")
+    
+    transactions = transaction_repo.get_all_transactions()
+    account_transactions = [
+        t for t in transactions 
+        if t["current_balance"] == account.current_balance
+    ]
+    
+    return {
+        "account_id": account_id,
+        "transactions": account_transactions
+    }
+
+@app.post("/accounts/create", status_code=201)
+def create_account(request: dict):
     try:
-        item = Item(name=name, price=price, item_type=ItemTypeEnum[item_type], admin_permission=admin_permission)
+        account = Account(
+            name=request.get("name"),
+            agency=request.get("agency"),
+            account_number=request.get("account_number"),
+            current_balance=request.get("current_balance", 0.0)
+        )
     except ParamNotValidated as err:
-        raise HTTPException(status_code=400, detail=err.message)
-    
-    item_response = repo.create_item(item, item_id)
-    return {
-        "item_id": item_id,
-        "item": item_response.to_dict()    
-    }
-    
-@app.delete("/items/delete_item")
-def delete_item(request: dict):
-    item_id = request.get("item_id")
-    
-    validation_item_id = Item.validate_item_id(item_id=item_id)
-    if not validation_item_id[0]:
-        raise HTTPException(status_code=400, detail=validation_item_id[1])
-    
-    item = repo.get_item(item_id)
-    
-    if item is None:
-        raise HTTPException(status_code=404, detail="Item Not found")
-    
-    if item.admin_permission == True:
-        raise HTTPException(status_code=403, detail="Item Not found")
-    
-    item_deleted = repo.delete_item(item_id)
+        raise HTTPException(status_code=400, detail=str(err))
     
     return {
-        "item_id": item_id,
-        "item": item_deleted.to_dict()    
+        "account": account.to_dict()
     }
-    
-@app.put("/items/update_item")
-def update_item(request: dict):
-    item_id = request.get("item_id")
-    
-    validation_item_id = Item.validate_item_id(item_id=item_id)
-    if not validation_item_id[0]:
-        raise HTTPException(status_code=400, detail=validation_item_id[1])
-    
-    item = repo.get_item(item_id)
-    
-    if item is None:
-        raise HTTPException(status_code=404, detail="Item Not found")
-    
-    if item.admin_permission == True:
-        raise HTTPException(status_code=403, detail="Item Not found")
-    
-    name = request.get("name")
-    price = request.get("price")
-    admin_permission = request.get("admin_permission")
-    
-    item_type_value = request.get("item_type")
-    if item_type_value != None:
-        if type(item_type_value) != str:
-            raise HTTPException(status_code=400, detail="Item type must be a string")
-        if item_type_value not in [possible_type.value for possible_type in ItemTypeEnum]:
-            raise HTTPException(status_code=400, detail="Item type is not a valid one")
-        item_type = ItemTypeEnum[item_type_value]
-    else:
-        item_type = None
-        
-    item_updated = repo.update_item(item_id, name, price, item_type, admin_permission)
-    
-    return {
-        "item_id": item_id,
-        "item": item_updated.to_dict()    
-    }
-    
-
 
 handler = Mangum(app, lifespan="off")
