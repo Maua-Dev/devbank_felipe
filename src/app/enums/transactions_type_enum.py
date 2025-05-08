@@ -1,5 +1,5 @@
 from enum import Enum
 
-class TransationsType(Enum):
+class TransactionsType(Enum):
     DEPOSIT="deposit"
     WITHDRAW="withdraw"
