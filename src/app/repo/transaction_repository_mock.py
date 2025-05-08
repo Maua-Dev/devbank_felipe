@@ -14,11 +14,7 @@ class TransactionRepositoryMock(ITransactionRepository):
         self.transactions_counter = 0
 
     def get_all_transactions(self):
-        arr_to_return = []
-        for transaction in self.transactions.values():
-            arr_to_return.append(transaction.to_dict())
-
-        return arr_to_return
+        return [t.to_dict() for t in self.transactions.values()]
     
     def create_transaction(self, transaction_type, transaction_value, transaction_time, curr_balance):
         

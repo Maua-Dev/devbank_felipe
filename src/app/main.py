@@ -96,14 +96,10 @@ def get_transactions(account_id: int):
         raise HTTPException(status_code=404, detail="Account not found")
     
     transactions = transaction_repo.get_all_transactions()
-    account_transactions = [
-        t for t in transactions 
-        if t["current_balance"] == account.current_balance
-    ]
     
     return {
         "account_id": account_id,
-        "transactions": account_transactions
+        "transactions": transactions
     }
 
 @app.post("/accounts/create", status_code=201)
