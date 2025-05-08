@@ -4,7 +4,7 @@ from src.app.enums.transactions_type_enum import TransactionsType
 from src.app.repo.account_repository_mock import AccountRepositoryMock
 
 
-class Test_AccountRepositoryMock:
+class ITransactionRepository:
 
     def test_get_account(self):
 
