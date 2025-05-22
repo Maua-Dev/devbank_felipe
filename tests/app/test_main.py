@@ -9,12 +9,10 @@ from src.app.main import get_account, get_transactions, make_deposit, make_withd
 class Test_Main:
     def test_get_account(self):
         expected = {
-            'account': {
-                'account': '11111-1',
-                'agency': '1111',
-                'current_balance': 1000.0,
-                'name': 'Felipe Sakae'
-        }
+            'account': '11111-1',
+            'agency': '1111',
+            'current_balance': 1000.0,
+            'name': 'Felipe Sakae'
     }
         result = get_account()
         assert result == expected
