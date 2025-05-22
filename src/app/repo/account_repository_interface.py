@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from src.app.entities.account import Account
-from src.app.entities.transaction import Transaction
+from ..entities.account import Account
+from ..entities.transaction import Transaction
 
 
 class IAccountRepository(ABC):

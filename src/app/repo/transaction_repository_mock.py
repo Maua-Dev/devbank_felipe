@@ -1,8 +1,8 @@
 import time
 from typing import Dict
-from src.app.entities.account import Account
-from src.app.entities.transaction import Transaction
-from src.app.repo.transaction_repository_interface import ITransactionRepository
+from ..entities.account import Account
+from ..entities.transaction import Transaction
+from ..repo.transaction_repository_interface import ITransactionRepository
 
 
 class TransactionRepositoryMock(ITransactionRepository):

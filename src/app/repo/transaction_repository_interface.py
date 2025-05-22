@@ -1,7 +1,7 @@
 import time
-from src.app.entities.transaction import Transaction
-from src.app.enums.transactions_type_enum import TransactionsType
-from src.app.repo.account_repository_mock import AccountRepositoryMock
+from ..entities.transaction import Transaction
+from ..enums.transactions_type_enum import TransactionsType
+from ..repo.account_repository_mock import AccountRepositoryMock
 
 
 class ITransactionRepository:
