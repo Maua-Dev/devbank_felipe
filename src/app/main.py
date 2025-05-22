@@ -19,8 +19,8 @@ account_repo: IAccountRepository = Environments.get_account_repo()
 transaction_repo: ITransactionRepository = Environments.get_transaction_repo()
 
 @app.get("/")
-def get_account(account_id: int):
-    account = account_repo.get_account(account_id)
+def get_account():
+    account = account_repo.get_account(1)
     
     return {
         "account": account.to_dict()    
@@ -44,7 +44,7 @@ def make_deposit(request: dict):
     }
 
 @app.post("/withdraw")
-def make_withdraw(account_id: int, request: dict):
+def make_withdraw(request: dict):
     total = 0
 
     for (bill, qty) in request.items():
