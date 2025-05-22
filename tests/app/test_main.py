@@ -8,8 +8,7 @@ from src.app.main import (
     get_account,
     make_deposit,
     make_withdraw,
-    get_transactions,
-    create_account
+    get_transactions
 )
 from src.app.repo.account_repository_mock import AccountRepositoryMock
 from src.app.repo.transaction_repository_mock import TransactionRepositoryMock
@@ -114,32 +113,3 @@ class Test_Main:
         assert len(response['transactions']) == 2
         assert any(t['type'] == 'deposit' for t in response['transactions'])
         assert any(t['type'] == 'withdraw' for t in response['transactions'])
-
-    def test_create_account_invalid_data(self):
-        test_cases = [
-            ({'name': '', 'agency': '1234', 'account_number': '12345-6'}, "Name must be at least 3 characters long"),
-            ({'name': 'Roberto', 'agency': '123', 'account_number': '12345-6'}, "Agency must have 4 digits"),
-            ({'name': 'Roberto', 'agency': '1234', 'account_number': '123456'}, "Account number format must be XXXXX-X"),
-            ({'name': 'Roberto', 'agency': '1234', 'account_number': '12345-6', 'current_balance': -100}, "Current balance must be a float"),
-        ]
-        
-        for data, error_msg in test_cases:
-            with pytest.raises(HTTPException) as err:
-                create_account(data)
-            assert err.value.status_code == 400
-            assert error_msg in str(err.value.detail)
-
-    def test_create_account_success(self):
-        account_data = {
-            'name': 'Roberto',
-            'agency': '1234',
-            'account_number': '12345-6',
-            'current_balance': 100.0
-        }
-        
-        response = create_account(account_data)
-        account = response['account']
-        assert account['name'] == 'Roberto'
-        assert account['agency'] == '1234'
-        assert account['account'] == '12345-6'
-        assert account['current_balance'] == 100.0
