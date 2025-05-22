@@ -1,12 +1,12 @@
 from fastapi import FastAPI, HTTPException
 from mangum import Mangum
 
-from src.app.repo.transaction_repository_mock import TransactionRepositoryMock
-from src.app.repo.account_repository_mock import AccountRepositoryMock
-from src.app.errors.entity_errors import ParamNotValidated
-from src.app.enums.transactions_type_enum import TransactionsType
-from src.app.entities.account import Account
-from src.app.entities.transaction import Transaction
+from .repo.transaction_repository_mock import TransactionRepositoryMock
+from .repo.account_repository_mock import AccountRepositoryMock
+from .errors.entity_errors import ParamNotValidated
+from .enums.transactions_type_enum import TransactionsType
+from .entities.account import Account
+from .entities.transaction import Transaction
 
 import time
 
