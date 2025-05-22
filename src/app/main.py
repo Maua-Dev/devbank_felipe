@@ -7,13 +7,14 @@ from .errors.entity_errors import ParamNotValidated
 from .enums.transactions_type_enum import TransactionsType
 from .entities.account import Account
 from .entities.transaction import Transaction
+from .environments import Environments
 
 import time
 
 app = FastAPI()
 
-account_repo = AccountRepositoryMock()
-transaction_repo = TransactionRepositoryMock()
+account_repo = Environments.get_account_repo()
+transaction_repo = Environments.get_transaction_repo()
 
 @app.get("/accounts/{account_id}")
 def get_account(account_id: int):
