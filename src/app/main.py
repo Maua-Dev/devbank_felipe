@@ -1,5 +1,6 @@
 from mangum import Mangum
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException
+from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 from src.app.repo.transaction_repository_mock import TransactionRepositoryMock
 from src.app.repo.account_repository_mock import AccountRepositoryMock
