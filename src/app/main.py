@@ -21,10 +21,7 @@ transaction_repo: ITransactionRepository = Environments.get_transaction_repo()
 @app.get("/")
 def get_account():
     account = account_repo.get_account(1)
-    
-    return {
-        "account": account.to_dict()    
-    }
+    return account.to_dict()
 
 @app.post("/deposit")
 def make_deposit(request: dict):
