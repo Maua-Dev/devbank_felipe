@@ -1,7 +1,6 @@
 from mangum import Mangum
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from starlette.requests import Request
-from fastapi.responses import JSONResponse
 from src.app.repo.transaction_repository_mock import TransactionRepositoryMock
 from src.app.repo.account_repository_mock import AccountRepositoryMock
 from src.app.errors.entity_errors import ParamNotValidated
@@ -21,13 +20,14 @@ transaction_repo = TransactionRepositoryMock()
 async def universal_exception_handler(request: Request, exc: Exception):
     print(f"Unhandled exception: {str(exc)}")
     traceback.print_exc()
-    return JSONResponse(
-        status_code=500,
-        content={
+    return Response(
+        content=json.dumps({
             "message": "Internal server error",
             "detail": str(exc),
             "type": exc.__class__.__name__
-        },
+        }),
+        status_code=500,
+        media_type="application/json"
     )
 
 @app.get("/")
@@ -183,7 +183,10 @@ def lambda_handler(event, context):
             "body": json.dumps({
                 "message": "Internal server error",
                 "error": str(e)
-            })
+            }),
+            "headers": {
+                "Content-Type": "application/json"
+            }
         }
 
 handler = Mangum(app, lifespan="off")
